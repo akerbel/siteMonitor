@@ -1,0 +1,17 @@
+{
+  "delay": 60,
+  "message_transport": "Mail",
+  "emails": [
+    "null@gmail.com"
+  ],
+
+  "from": "siteMonitor@null.domain",
+
+  "time":[
+    180,
+    600,
+    3000,
+    6000,
+    30000
+  ]
+}

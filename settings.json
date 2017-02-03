@@ -1,0 +1,17 @@
+{
+  "delay": 5,
+  "message_transport": "Mail",
+  "emails": [
+    "akerbel.dev@gmail.com"
+  ],
+
+  "from": "siteMonitor@null.domain",
+
+  "time":[
+    10,
+    600,
+    3000,
+    6000,
+    30000
+  ]
+}
