@@ -7,7 +7,7 @@ use GuzzleHttp\Client;
 
 // Получаем аргументы команды
 $options = getopt('l:s::');
-var_dump($options);
+
 $link = $options['l'];
 
 // Загружаем конфиг
