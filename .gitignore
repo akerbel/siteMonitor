@@ -1,1 +1,5 @@
 /vendor/
+/settings/fast.json
+error.log
+application.log
+daemon.log

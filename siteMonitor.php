@@ -1,6 +1,26 @@
 <?php
 
-require_once './vendor/autoload.php';
+// Создаем дочерний процесс
+$child_pid = pcntl_fork();
+if ($child_pid) {
+    // Выходим из родительского, привязанного к консоли, процесса
+    exit();
+}
+// Делаем основным процессом дочерний.
+posix_setsid();
+
+$baseDir = dirname(__FILE__);
+
+// Переопределяем вывод
+ini_set('error_log',$baseDir.'/error.log');
+fclose(STDIN);
+fclose(STDOUT);
+fclose(STDERR);
+$STDIN = fopen('/dev/null', 'r');
+$STDOUT = fopen($baseDir.'/application.log', 'ab');
+$STDERR = fopen($baseDir.'/daemon.log', 'ab');
+
+require_once $baseDir.'/vendor/autoload.php';
 
 use Noodlehaus\Config;
 use GuzzleHttp\Client;
@@ -12,9 +32,9 @@ $link = $options['l'];
 
 // Загружаем конфиг
 if (!empty($options['s'])) {
-    $settings = Config::load('./settings/'.$options['s']);
+    $settings = Config::load($baseDir.'/settings/'.$options['s']);
 } else {
-    $settings = Config::load('./settings/default.json');
+    $settings = Config::load($baseDir.'/settings/default.json');
 }
 
 // Создаем HTTP клиент
@@ -41,7 +61,7 @@ while (1) {
             throw new \Exception('Status code isnot 200', $res->getStatusCode());
         }
 
-        echo $res->getStatusCode()."\n";
+        echo getFormattedTime(time()).' - '.$link.' - Status: '.$res->getStatusCode()."\n";
 
         // Если до этого сайт лежал, а теперь поднялся
         if ($failedTime !== null) {
@@ -50,19 +70,19 @@ while (1) {
             if (!empty($sent)) {
                 // то отправляем письмо о починке
                 if ($messageTransport->send(
-                        "Сервер поднялся!\r\n" .
+                        "Server UP!\r\n" .
                         "link: $link\r\n" .
                         'Was failed from: ' . getFormattedTime($failedTime) . "\r\n",
                         'Server UP!'
                     )
                 ) {
-                    echo "The positive message was sent\n";
+                    echo getFormattedTime(time())." - $link - Status: {$res->getStatusCode()} The positive message was sent\n";
                     // Обнуляем данные об отправленных сообщениях
                     $sent = [];
                     // Обнуляем время падения
                     $failedTime = null;
                 } else {
-                    echo "The positive message wasn`t sent\n";
+                    echo getFormattedTime(time())." - $link - Status: {$res->getStatusCode()} The positive message wasn`t sent\n";
                 }
             } else {
                 // Обнуляем время падения
@@ -103,10 +123,10 @@ while (1) {
                         )
                 ){
                     // Запоминаем время отправки письма
-                    echo "The negative message was sent\n";
+                    echo getFormattedTime(time())." - $link - Status: {$e->getCode()} The negative message was sent\n";
                     $sent[] = $time;
                 } else {
-                    echo "The negative message wasn`t sent\n";
+                    echo getFormattedTime(time())." - $link - Status: {$e->getCode()} The negative message wasn`t sent\n";
                 }
 
             }
