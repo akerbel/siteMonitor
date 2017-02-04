@@ -61,8 +61,6 @@ while (1) {
             throw new \Exception('Status code isnot 200', $res->getStatusCode());
         }
 
-        echo getFormattedTime(time()).' - '.$link.' - Status: '.$res->getStatusCode()."\n";
-
         // Если до этого сайт лежал, а теперь поднялся
         if ($failedTime !== null) {
 
@@ -89,6 +87,8 @@ while (1) {
                 $failedTime = null;
             }
 
+        } else {
+            echo getFormattedTime(time()).' - '.$link.' - Status: '.$res->getStatusCode()."\n";
         }
 
     } catch (\Exception $e) {
@@ -99,16 +99,16 @@ while (1) {
             $failedTime = time();
 
         // Если это НЕ первый ответ с ошибкой
-        } else {
+            // И если количество уже отправленных сообщений меньше количества возможных сообщений в конфиге
+        } elseif (count($sent) < count($settings->get('time'))) {
 
             $time = time();
 
             // Считаем сколько времени сайт лежит
             $difference = $time - $failedTime;
-
-            // Если количество уже отправленных сообщений меньше количества возможных сообщений в конфиге
-            // и если время простоя больше времени отправки следующего письма
-            if ( (count($sent) < count($settings->get('time'))) and ($difference >= $settings->get('time')[count($sent)]) ) {
+            
+            // Если время простоя больше времени отправки следующего письма
+            if ($difference >= $settings->get('time')[count($sent)]) {
 
                 // отсылаем письмо о падении
                 if ($messageTransport->send(
